@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-
-'''
-    Sorts through Roll20's LFG HTML and returns a markdown file
-    containing game listings.
-'''
+''' Sorts through Roll20's LFG HTML and returns a markdown file
+    containing game listings. '''
 
 
 from bs4 import BeautifulSoup
@@ -139,13 +136,11 @@ def main():
     ''' This will be run when script is called from the command line. '''
     url = "{}/lfg/search/?{}".format(URL, '&'.join(OPTIONS))
     listings = defaultdict(list)
-
     while url:
         roll20_soup = make_soup(url)
         for system, values in scrape_page(roll20_soup):
             listings[system].append(values)
         url = check_pagination(roll20_soup)
-
     write_listings(listings)
     notify('"Listings are ready!"')
 
