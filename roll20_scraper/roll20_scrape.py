@@ -5,6 +5,7 @@
 
 from bs4 import BeautifulSoup
 from collections import defaultdict
+import json
 import os
 import re
 import requests
@@ -12,34 +13,8 @@ import time
 
 
 # Global values
-URL = "https://app.roll20.net"
-GAMES = {
-        'dragonage': 'Dragon Age RPG',
-        'fantasyage': 'Fantasy AGE',
-        'fate': 'FATE \( Core, Accelerated, Dresden Files, etc \)',
-        'shadowrun': 'Shadowrun \( Any Edition \)',
-        'wod': 'World of Darkness \( Vampire, Werewolf, Mage, etc \)', }
-OPTIONS = [
-        'days=',
-        'dayhours=',
-        'frequency=onceweekly,biweekly',
-        'timeofday=7:00pm',
-        'timeofday_seconds=1470952800',
-        'language=English',
-        'avpref=Any',
-        'gametype=rpg',
-        'newplayer=false',
-        'yesmaturecontent=true',
-        "playingstructured={}".format('%2C'.join(GAMES.keys())),
-        'sortby=relevance',
-        'for_event=', ]
-TARGET_DIR = [
-        os.path.expanduser('~'),
-        'Documents',
-        'RPG',
-        'Roll20',
-        'listings', ]
-
+with open(os.path.join(os.getcwd(), 'config.json')) as json_file:
+    CONFIG = json.load(json_file)
 
 def notify(message):
     ''' Sends a system notification (on Linux) and exits the program. '''
@@ -70,7 +45,7 @@ def make_soup(url):
 def get_title(title_link):
     ''' Takes title link, and splits it into title and url. '''
     title = title_link.get_text()
-    href = URL + title_link.get('href')
+    href = CONFIG['url'] + title_link.get('href')
     return "[{}]({})".format(title, href)
 
 
@@ -78,7 +53,7 @@ def get_title(title_link):
 def get_gm(data):
     ''' Extract GM name and profile url from table data. '''
     name = data.find('div', 'name').get_text()
-    href = URL + data.find('a', 'userprofile').get('href')
+    href = CONFIG['url'] + data.find('a', 'userprofile').get('href')
     return "[{}]({})".format(name, href)
 
 
@@ -91,7 +66,7 @@ def get_desc(data):
 
 def get_game_type(meta):
     ''' Use regex to determine game being played. '''
-    regex = re.compile(r"({})".format('|'.join(GAMES.values())))
+    regex = re.compile(r"({})".format('|'.join(CONFIG['games'].values())))
     game_type = re.search(regex, meta)
     return game_type.group(0) if game_type else 'Unknown'
 
@@ -101,7 +76,7 @@ def check_pagination(data):
     ''' Check if there are more pages of search results. '''
     next_link = data.find('ul', 'pagination').find_all('a')[-1].get('href')
     if next_link != 'javascript:void(0);':
-        return URL + next_link
+        return CONFIG['url'] + next_link
     else:
         return ''
 
@@ -122,7 +97,7 @@ def write_listings(listings):
     ''' Write our listings to a markdown file. '''
     today = time.strftime('%Y-%m-%d')
     now = time.strftime('%I:%M %p')
-    filename = os.path.join(*TARGET_DIR, 'roll20-{}.md'.format(today))
+    filename = os.path.join(CONFIG['targetDir'], 'roll20-{}.md'.format(today))
     with open(filename, 'w') as fh:
         fh.write('# Roll20 listings for {}\nCreated {}\n\n'.format(today, now))
         for system, entries in listings.items():
@@ -132,9 +107,17 @@ def write_listings(listings):
                 fh.write("### {} :: {}\n{}\n\n".format(*entry))
 
 
+def build_url(url, options, games):
+    '''Takes the base URL, the search paramters and games list and
+       uses them to build the initial URL.'''
+    options_string = '&'.join(["{}={}".format(key, val) for key, val in options.items()])
+    games_string = "playingstructured={}".format('%2C'.join([key for key in games.keys()]))
+    return "{}/lfg/search/?{}&{}".format(url, options_string, games_string)
+
+
 def main():
     ''' This will be run when script is called from the command line. '''
-    url = "{}/lfg/search/?{}".format(URL, '&'.join(OPTIONS))
+    url = build_url(CONFIG['url'], CONFIG['options'], CONFIG['games'])
     listings = defaultdict(list)
     while url:
         roll20_soup = make_soup(url)

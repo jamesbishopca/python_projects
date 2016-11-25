@@ -1,0 +1,25 @@
+{
+  "url" : "https://app.roll20.net",
+  "games" : {
+    "dragonage": "Dragon Age RPG",
+    "fantasyage": "Fantasy AGE",
+    "fate": "FATE \\( Core, Accelerated, Dresden Files, etc \\)",
+    "shadowrun": "Shadowrun \\( Any Edition \\)",
+    "wod": "World of Darkness \\( Vampire, Werewolf, Mage, etc \\)"
+  },
+  "options" : {
+    "days" : "",
+    "dayhours" : "",
+    "frequency" : "onceweekly,biweekly",
+    "timeofday" : "7:00pm",
+    "timeofday_seconds" : "1470952800",
+    "language" : "English",
+    "avpref" : "Any",
+    "gametype" : "rpg",
+    "newplayer" : "false",
+    "yesmaturecontent" : "true",
+    "sortby" : "relevance",
+    "for_event" : ""
+  },
+  "targetDir" : "/home/james/Documents/RPG/Roll20/listings"
+}
