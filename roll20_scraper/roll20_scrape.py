@@ -17,8 +17,10 @@ import time
 with open(os.path.join(os.getcwd(), 'config.json')) as json_file:
     CONFIG = json.load(json_file)
 
+
 ENV = Environment(loader=FileSystemLoader('./templates'))
 TEMPLATE = ENV.get_template('listings_template.md')
+
 
 def notify(message):
     ''' Sends a system notification (on Linux) and exits the program. '''
@@ -103,7 +105,7 @@ def write_listings(listings):
     now = time.strftime('%I:%M %p')
     filename = os.path.join(CONFIG['targetDir'], 'roll20-{}.md'.format(today))
     with open(filename, 'w') as fh:
-        fh.write(TEMPLATE.render(listings=listings, today=today, now=now))
+        fh.write(TEMPLATE.render({'today': today, 'now': now, 'listings': listings}))
 
 
 def build_url(url, options, games):
