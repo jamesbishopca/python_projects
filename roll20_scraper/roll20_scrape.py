@@ -5,6 +5,7 @@
 
 from bs4 import BeautifulSoup
 from collections import defaultdict
+from jinja2 import Environment, FileSystemLoader
 import json
 import os
 import re
@@ -15,6 +16,9 @@ import time
 # Global values
 with open(os.path.join(os.getcwd(), 'config.json')) as json_file:
     CONFIG = json.load(json_file)
+
+ENV = Environment(loader=FileSystemLoader('./templates'))
+TEMPLATE = ENV.get_template('listings_template.md')
 
 def notify(message):
     ''' Sends a system notification (on Linux) and exits the program. '''
@@ -90,7 +94,7 @@ def scrape_page(data):
         title = get_title(row.strong.a)
         gm = get_gm(row.find('td', 'gminfo'))
         desc = get_desc(row.find_all('td')[2])
-        yield game_type, (title, gm, desc)
+        yield game_type, {'title': title, 'gm': gm, 'desc': desc}
 
 
 def write_listings(listings):
@@ -99,12 +103,7 @@ def write_listings(listings):
     now = time.strftime('%I:%M %p')
     filename = os.path.join(CONFIG['targetDir'], 'roll20-{}.md'.format(today))
     with open(filename, 'w') as fh:
-        fh.write('# Roll20 listings for {}\nCreated {}\n\n'.format(today, now))
-        for system, entries in listings.items():
-            fh.write("## {}\n{} listings found.<br>\n".format(
-                    system, len(entries)))
-            for entry in entries:
-                fh.write("### {} :: {}\n{}\n\n".format(*entry))
+        fh.write(TEMPLATE.render(listings=listings, today=today, now=now))
 
 
 def build_url(url, options, games):
